@@ -23,6 +23,8 @@ exports.genre_detail = asyncHandler(async (req, res, next) => {
     return next(err);
   }
 
+  console.log(req.params.id);
+
   res.render('genre_detail', {
     title: 'Genre Detail',
     genre: genre,
