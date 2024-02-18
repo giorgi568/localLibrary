@@ -8,12 +8,27 @@ const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const catalogRouter = require('./routes/catalog');
 
+const compression = require('compression');
+const helmet = require('helmet');
+
 const app = express();
 
+// Set up rate limiter: maximum of twenty requests per minute
+const RateLimit = require('express-rate-limit');
+const limiter = RateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20,
+});
+// Apply rate limiter to all requests
+app.use(limiter);
+
+// Set up mongoose connection
 const mongoose = require('mongoose');
 mongoose.set('strictQuery', false);
-const mongoDB =
+
+const dev_db_url =
   'mongodb+srv://localL:wYnu4OPAmoSElAsS@cluster0.lkcne6n.mongodb.net/local_library?retryWrites=true&w=majority';
+const mongoDB = process.env.MONGODB_URI || dev_db_url;
 
 main().catch((err) => console.log(err));
 async function main() {
@@ -23,6 +38,19 @@ async function main() {
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
+
+app.use(compression());
+// compress routes using gzip
+
+// Add helmet to the middleware chain.
+// Set CSP headers to allow our Bootstrap and Jquery to be served
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      'script-src': ["'self'", 'code.jquery.com', 'cdn.jsdelivr.net'],
+    },
+  })
+);
 
 app.use(logger('dev'));
 app.use(express.json());
